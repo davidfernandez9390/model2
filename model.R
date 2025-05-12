@@ -1,5 +1,6 @@
 simulate <- function(strategies,
-                     p.healthy.cancer,
+                     p.healthy.cancer_30_35,
+                     p.healthy.cancer_35_40,
                      p.healthy.death,
                      p.cancer.death,
                      p.screening.effective,
@@ -19,17 +20,17 @@ simulate <- function(strategies,
     if (strategy == 'untreated') {
       state.costs[1] <- 0
       state.costs[2] <- 0
-      p.cancer <- p.healthy.cancer
+      p.cancer <- p.healthy.cancer_30_35
       p.cancer.healthy <- 0
     } else if (strategy == 'screening') {
       state.costs[1] <- cost.screening
       state.costs[2] <- 0
-      p.cancer <- p.healthy.cancer * p.screening.effective
+      p.cancer <- p.healthy.cancer_30_35 * p.screening.effective
       p.cancer.healthy <- p.treatment.effective
     } else if (strategy == 'treatment') {
       state.costs[1] <- 0
       state.costs[2] <- cost.cancer.treatment
-      p.cancer <- p.healthy.cancer
+      p.cancer <- p.healthy.cancer_30_35
       p.cancer.healthy <- p.treatment.effective
     }
 
@@ -37,7 +38,7 @@ simulate <- function(strategies,
                           p.cancer.healthy, 1-p.cancer.healthy-p.cancer.death, p.cancer.death,
                           0, 0, 1),
                         nrow=3, byrow = TRUE)
-  Sys.sleep(3)
+  #Sys.sleep(3)
 
     costs <- c()
     utilities <- c()
@@ -45,6 +46,29 @@ simulate <- function(strategies,
     cohort <- list()
     cohort[[1]] <- c(1,0,0)
     for(i in seq(2,simulated.years+1)) {
+      if (i ==5) {
+        if (strategy == 'untreated') {
+          state.costs[1] <- 0
+          state.costs[2] <- 0
+          p.cancer <- p.healthy.cancer_35_40
+          p.cancer.healthy <- 0
+        } else if (strategy == 'screening') {
+          state.costs[1] <- cost.screening
+          state.costs[2] <- 0
+          p.cancer <- p.healthy.cancer_35_40 * p.screening.effective
+          p.cancer.healthy <- p.treatment.effective
+        } else if (strategy == 'treatment') {
+          state.costs[1] <- 0
+          state.costs[2] <- cost.cancer.treatment
+          p.cancer <- p.healthy.cancer_35_40
+          p.cancer.healthy <- p.treatment.effective
+        }
+        
+        tp.matrix <- matrix(c(1-p.cancer-p.healthy.death, p.cancer, p.healthy.death,
+                              p.cancer.healthy, 1-p.cancer.healthy-p.cancer.death, p.cancer.death,
+                              0, 0, 1),
+                            nrow=3, byrow = TRUE)
+      }
       costs <- c(costs, state.costs %*% cohort[[i-1]] * (1-discount)^(i-1))
       utilities <- c(utilities, state.utilities %*% cohort[[i-1]] * (1-discount)^(i-1))
       cohort[[i]]  <- as.numeric(cohort[[i-1]] %*% tp.matrix)
@@ -60,3 +84,4 @@ simulate <- function(strategies,
     cohort.info=cohort.states
   ))
 }
+
